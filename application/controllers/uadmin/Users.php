@@ -12,15 +12,43 @@ class Users extends Uadmin_Controller
 	public function __construct()
 	{
 		parent::__construct();
-		$this->load->library('services/User_services');
-		$this->services = new User_services;
+		$this->load->library('services/Employee_services');
+		$this->services = new Employee_services;
 		$this->_user_groups = array(
-			"farmer" => 'Petani',
-			"suplier" => 'Suplier',
-			"transporter" => 'Transporter',
+			"employee" => 'Pegawai',
 		);
-		
+		$this->load->model(array(
+			'employee_model',
+			'position_model',
+			'organization_model',
+			'religion_model',
+		));
 	} 
+
+	public function get_position_list() {
+		$positions = $this->position_model->positions()->result();
+		foreach ($positions as $key => $position) {
+		  $position_list[$position->id] = $position->name; 
+		}
+		return $position_list;
+	  }
+	
+	  public function get_organization_list() {
+		$organizations = $this->organization_model->organizations()->result();
+		foreach ($organizations as $key => $organization) {
+		  $organization_list[$organization->id] = $organization->name; 
+		}
+		return $organization_list;
+	  }
+	
+	  public function get_religion_list() {
+		$religions = $this->religion_model->religions()->result();
+		foreach ($religions as $key => $religion) {
+		  $religion_list[$religion->id] = $religion->name; 
+		}
+		return $religion_list;
+	  }
+
 	public function index( $id_user = NULL )
 	{
 		 // 
@@ -35,9 +63,7 @@ class Users extends Uadmin_Controller
 		 if ($pagination['total_records']>0) $this->data['pagination_links'] = $this->setPagination($pagination);
 
 		$table = $this->services->get_table_config( $this->current_page );
-		$table[ "rows" ] = $this->ion_auth->users_limit( $pagination['limit_per_page'], $pagination['start_record']  )->result();
-		unset( $table[ "rows" ][0] );
-		unset( $table[ "rows" ][1] );
+		$table[ "rows" ] = $this->employee_model->employees( $pagination['limit_per_page'], $pagination['start_record']  )->result();
 		$table = $this->load->view('templates/tables/plain_table', $table, true);
 		$this->data[ "contents" ] = $table;
 
@@ -60,51 +86,12 @@ class Users extends Uadmin_Controller
 		$this->data["sub_header"] = 'Klik Tombol Action Untuk Aksi Lebih Lanjut';
 		$this->render( "templates/contents/plain_content" );
 	}
-	// public function index( $user_groups = NULL )
-	// {
-	// 	$this->data[ "menu_list_id" ] = "users_".$user_groups ; 
-	// 	// echo $this->data[ "menu_list_id" ] ; return;
-	// 	// 
-	// 	 $page = ($this->uri->segment(4)) ? ($this->uri->segment(4) - 1) : 0;
-	// 	 //pagination parameter
-	// 	 $pagination['base_url'] = base_url( $this->current_page ) .'/index';
-	// 	 $pagination['total_records'] = $this->ion_auth->record_count() ;
-	// 	 $pagination['limit_per_page'] = 10;
-	// 	 $pagination['start_record'] = $page*$pagination['limit_per_page'];
-	// 	 $pagination['uri_segment'] = 4;
-	// 	 //set pagination
-	// 	 if ($pagination['total_records']>0) $this->data['pagination_links'] = $this->setPagination($pagination);
-
-	// 	$table = $this->services->get_table_config( $this->current_page );
-	// 	$table[ "rows" ] = $this->ion_auth->users_limit( $pagination['limit_per_page'], $pagination['start_record'] , $user_groups )->result();
-	// 	$table = $this->load->view('templates/tables/plain_table', $table, true);
-	// 	$this->data[ "contents" ] = $table;
-
-	// 	$link_add = 
-	// 	array(
-	// 		"name" => "Tambah",
-	// 		"type" => "link",
-	// 		"url" => site_url( $this->current_page."create/"),
-	// 		"button_color" => "primary",	
-	// 		"data" => NULL,
-	// 	);
-	// 	// $this->data[ "header_button" ] =  $this->load->view('templates/actions/link', $link_add, TRUE ); ;
-	// 	#################################################################3
-	// 	$alert = $this->session->flashdata('alert');
-	// 	$this->data["key"] = $this->input->get('key', FALSE);
-	// 	$this->data["alert"] = (isset($alert)) ? $alert : NULL ;
-	// 	$this->data["current_page"] = $this->current_page;
-	// 	$this->data["block_header"] = "";//$this->_user_groups[ $user_groups ];
-	// 	$this->data["header"] = "";//$this->_user_groups[ $user_groups ];
-	// 	$this->data["sub_header"] = 'Klik Tombol Action Untuk Aksi Lebih Lanjut';
-	// 	$this->render( "templates/contents/plain_content" );
-	// }
 
 	public function add()
     {
         $tables = $this->config->item('tables', 'ion_auth');
         $identity_column = $this->config->item('identity', 'ion_auth');
-        $this->form_validation->set_rules( $this->ion_auth->get_validation_config() );
+        $this->form_validation->set_rules( $this->services->get_validation_config() );
         $this->form_validation->set_rules('phone', "No Telepon", 'trim|required');
         $this->form_validation->set_rules('email', "Email", 'trim|required|is_unique[users.email]');
 
@@ -134,6 +121,15 @@ class Users extends Uadmin_Controller
 
         if ($this->form_validation->run() === TRUE && ( $user_id =  $this->ion_auth->register($identity, $password, $email,$additional_data, [$group_id], $identity_mode ) ) )
         {
+			$employee_data = array(
+				'employee_id_number'=> $this->input->post('employee_id_number'),
+				'position_id' 		=> $this->input->post('position_id'),
+				'organization_id' 	=> $this->input->post('organization_id'),
+				'religion_id' 		=> $this->input->post('religion_id'),
+				'user_id' 			=> $user_id
+			);
+			$this->employee_model->create( $employee_data );
+
             $this->session->set_flashdata('alert', $this->alert->set_alert( Alert::SUCCESS, $this->ion_auth->messages() ) );
             // redirect( s_ite_url( $this->current_page.$this->ion_auth->group( $group_id )->row()->name)  );
             redirect( site_url( $this->current_page  )  );
@@ -151,7 +147,7 @@ class Users extends Uadmin_Controller
 			$this->data["header"] = "Tambah User ";
 			$this->data["sub_header"] = 'Klik Tombol Action Untuk Aksi Lebih Lanjut';
 
-            $form_data = $this->ion_auth->get_form_data();
+            $form_data = $this->services->get_form_data();
             $form_data = $this->load->view('templates/form/plain_form', $form_data , TRUE ) ;
 
             $this->data[ "contents" ] =  $form_data;
@@ -160,12 +156,12 @@ class Users extends Uadmin_Controller
         }
 	}
 
-	public function edit( $user_id = NULL )
+	public function edit( $employee_id = NULL )
     {
         $tables = $this->config->item('tables', 'ion_auth');
         $identity_column = $this->config->item('identity', 'ion_auth');
         $this->form_validation->set_rules( $this->ion_auth->get_validation_config() );
-        $this->form_validation->set_rules('phone', "No Telepon", 'trim|required|is_unique[users.phone]');
+        $this->form_validation->set_rules('phone', "No Telepon", 'trim|required');
 		if ( $this->input->post('password') )
         {
             $this->form_validation->set_rules( 'password',"Kata Sandi",'required|min_length[' . $this->config->item('min_password_length', 'ion_auth') . ']|max_length[' . $this->config->item('max_password_length', 'ion_auth') . ']|matches[password_confirm]' );            
@@ -175,6 +171,7 @@ class Users extends Uadmin_Controller
         if ( $this->form_validation->run() === TRUE )
         {
 			$user_id = $this->input->post('id');
+			$employee_id = $this->input->post('employee_id');
 			$group_id = $this->input->post('group_id');
       
             $data = array(
@@ -196,15 +193,31 @@ class Users extends Uadmin_Controller
 			// check to see if we are updating the user
 			if ( $this->ion_auth->update( $user_id, $data, $identity_mode) )
 			{
+				$employee_data = array(
+					'employee_id_number'=> $this->input->post('employee_id_number'),
+					'position_id' 		=> $this->input->post('position_id'),
+					'organization_id' 	=> $this->input->post('organization_id'),
+					'religion_id' 		=> $this->input->post('religion_id')
+				);
+				$data_param['id'] = $employee_id;
+
+				if ( $this->employee_model->update( $employee_data, $data_param ) )
+				{
+					$this->session->set_flashdata('alert', $this->alert->set_alert( Alert::SUCCESS, $this->employee_model->messages() ) );
+					redirect( site_url( $this->current_page  )  );
+				}
+				else 
+				{
+					$this->session->set_flashdata('alert', $this->alert->set_alert( Alert::DANGER, $this->employee_model->errors() ) );
+					redirect( site_url($this->current_page)."edit/".$employee_id  );		
+				}
               // redirect them back to the uadmin page if uadmin, or to the base url if non uadmin
-              $this->session->set_flashdata('alert', $this->alert->set_alert( Alert::SUCCESS, $this->ion_auth->messages() ) );
-              redirect( site_url( $this->current_page  )  );
             }
             else
             {
               // redirect them back to the uadmin page if uadmin, or to the base url if non uadmin
               $this->session->set_flashdata('alert', $this->alert->set_alert( Alert::DANGER, $this->ion_auth->errors() ) );
-              redirect( site_url($this->current_page)."edit/".$user_id  );
+              redirect( site_url($this->current_page)."edit/".$employee_id  );
             }
         }
         else
@@ -220,7 +233,7 @@ class Users extends Uadmin_Controller
 			$this->data["header"] = "Edit User ";
 			$this->data["sub_header"] = 'Klik Tombol Action Untuk Aksi Lebih Lanjut';
 
-            $form_data = $this->ion_auth->get_form_data( $user_id );
+            $form_data = $this->services->get_form_data( $employee_id );
 			$form_password[ 'form_data' ] = array(
 				"password" => array(
 				  'type' => 'password',
@@ -238,11 +251,11 @@ class Users extends Uadmin_Controller
         }
 	}
 
-	public function detail( $user_id = NULL )
+	public function detail( $employee_id = NULL )
 	{
-		if( !($user_id) ) redirect(site_url('uadmin'));  
+		if( !($employee_id) ) redirect(site_url('uadmin'));  
 
-		$form_data = $this->services->get_form_data_readonly(  $user_id );
+		$form_data = $this->services->get_form_data_readonly(  $employee_id );
 		$form_data = $this->load->view('templates/form/plain_form_readonly', $form_data , TRUE ) ;
 
 		$this->data[ "contents" ] =  $form_data;

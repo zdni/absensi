@@ -10,6 +10,7 @@ class Home extends Public_Controller {
 	public function index()
 	{
 		// TODO : tampilkan landing page bagi user yang belum daftar
-		$this->render("landing_page");
+		redirect('auth/login', 'refresh'); // use redirects instead of loading views for compatibility with MY_Controller libraries
+		// $this->render("landing_page");
 	}
 }

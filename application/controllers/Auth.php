@@ -33,7 +33,9 @@ class Auth extends Public_Controller
 
                                 if( $this->ion_auth->is_admin()) redirect(site_url('/admin'));
 
-                                if( $this->ion_auth->in_group( 'uadmin' ) ) redirect(site_url('/uadmin'));
+                                if( $this->ion_auth->in_group( 'uadmin' ) ) redirect(site_url('/uadmin/users'));
+                                if( $this->ion_auth->in_group( 'employee' ) ) redirect(site_url('/employee/home'));
+                                if( $this->ion_auth->in_group( 'validator' ) ) redirect(site_url('/employee/home'));
 
                                 redirect( site_url('/user') , 'refresh'); // use redirects instead of loading views for compatibility with MY_Controller libraries
                         }

@@ -2124,7 +2124,7 @@ class Ion_auth_model extends MY_Model
 
 		$this->db->trans_begin();
 		$data_param['id'] = $id;
-		if( !$this->delete_foreign( $data_param  ) )
+		if( !$this->delete_foreign( $data_param, ['employee_model']  ) )
 		{
 			$this->set_error("gagal");//('product_delete_unsuccessful');
 			return FALSE;

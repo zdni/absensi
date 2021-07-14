@@ -21,9 +21,9 @@
             </div>
             <div class="row">
                 <label class="col-md-7" for="nama_lengkap">Password: </label>
-                <p class="mb-1 col-md-5">
+                <!-- <p class="mb-1 col-md-5">
                     <a href="#">Lupa password?</a>
-                </p>
+                </p> -->
             </div>
             <div class="input-group mb-3">
                 <input type="password" class="form-control" name="user_password" id="user_password" placeholder="password">
@@ -41,9 +41,9 @@
             </div>
             </form>
 
-            <p class="mt-4 mb-4 text-center">
+            <!-- <p class="mt-4 mb-4 text-center">
                 Tidak punya akun? <a href="<?= base_url('auth/') ?>register" class="text-center">Register</a>
-            </p>
+            </p> -->
         </div>
     </div>
 </div>

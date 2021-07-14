@@ -73,6 +73,36 @@
     });
   });
 </script>
+<script>
+    $('#input_start_time').datetimepicker({ format: 'LT' })
+    $('#input_end_time').datetimepicker({ format: 'LT' })
+
+
+    $(document).ready(function(){
+ 
+    $('#type_id').change(function(){ 
+     var type_id=$(this).val();
+     $.ajax({
+         url : "<?php echo site_url('employee/activities/get_activity_list');?>",
+         method : "POST",
+         data : {type_id: type_id},
+         async : true,
+         dataType : 'json',
+         success: function(data){
+             var html = '<option value="">-- Pilih Aktivitas --</option>';
+             var i;
+             for(i=0; i<data.length; i++){
+                 html += '<option value='+data[i].id+'>'+data[i].name+'</option>';
+             }
+             $('#activity_id').html(html);
+
+         }
+     });
+     return false;
+ }); 
+  
+});
+</script>
 </body>
 
 </html>
